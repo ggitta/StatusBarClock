@@ -47,6 +47,7 @@ python3 -m venv .venv
 
 ```text
 dist/StatusBarClock.app
+dist/StatusBarClock.dmg
 ```
 
 应用图标在 `setup.py` 中配置，实际打包使用：
@@ -63,7 +64,9 @@ assets/logo.svg
 
 ## 安装
 
-打包完成后，把 `.app` 复制到 `/Applications`：
+打包完成后，打开 `dist/StatusBarClock.dmg`，把 `StatusBarClock.app` 拖到 `Applications`。
+
+也可以直接把 `.app` 复制到 `/Applications`：
 
 ```bash
 cp -R dist/StatusBarClock.app /Applications/

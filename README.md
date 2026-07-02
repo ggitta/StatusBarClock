@@ -47,6 +47,7 @@ The packaged app is created at:
 
 ```text
 dist/StatusBarClock.app
+dist/StatusBarClock.dmg
 ```
 
 The app icon is configured in `setup.py` and uses:
@@ -63,7 +64,9 @@ assets/logo.svg
 
 ## Install
 
-After building, copy the app bundle to `/Applications`:
+After building, open `dist/StatusBarClock.dmg` and drag `StatusBarClock.app` to `Applications`.
+
+You can also copy the app bundle to `/Applications` directly:
 
 ```bash
 cp -R dist/StatusBarClock.app /Applications/
