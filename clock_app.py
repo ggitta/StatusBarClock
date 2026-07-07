@@ -80,18 +80,63 @@ LAUNCH_AGENT_PATH = os.path.expanduser(
 
 
 def is_autostart_enabled():
-    return os.path.exists(LAUNCH_AGENT_PATH)
+    if not os.path.exists(LAUNCH_AGENT_PATH):
+        return False
+    try:
+        with open(LAUNCH_AGENT_PATH, "rb") as f:
+            plist_data = plistlib.load(f)
+        return (
+            plist_data.get("Label") == LAUNCH_AGENT_LABEL
+            and plist_data.get("ProgramArguments") == autostart_arguments()
+            and plist_data.get("RunAtLoad") is True
+        )
+    except Exception:
+        return False
+
+
+def bundled_app_executable():
+    executable_path = os.path.realpath(sys.executable)
+    macos_dir = os.path.dirname(executable_path)
+    contents_dir = os.path.dirname(macos_dir)
+    app_dir = os.path.dirname(contents_dir)
+    info_path = os.path.join(contents_dir, "Info.plist")
+    if not app_dir.endswith(".app") or not os.path.exists(info_path):
+        return None
+
+    try:
+        with open(info_path, "rb") as f:
+            info = plistlib.load(f)
+        executable_name = info.get("CFBundleExecutable")
+    except Exception:
+        executable_name = None
+    if not executable_name:
+        return None
+
+    app_executable = os.path.join(macos_dir, executable_name)
+    if os.path.exists(app_executable):
+        return app_executable
+    return None
+
+
+def autostart_arguments():
+    if getattr(sys, "frozen", False):
+        app_executable = bundled_app_executable()
+        if not app_executable:
+            raise RuntimeError("无法定位打包后的 .app 启动程序")
+        return [app_executable]
+
+    script_path = os.path.abspath(__file__)
+    return [sys.executable, script_path]
 
 
 def enable_autostart():
     """写入 LaunchAgent plist 并通过 launchctl 加载,实现开机自启动。"""
     os.makedirs(os.path.dirname(LAUNCH_AGENT_PATH), exist_ok=True)
     os.makedirs(APP_SUPPORT_DIR, exist_ok=True)
-    if getattr(sys, "frozen", False):
-        program_arguments = [sys.executable]
-    else:
-        script_path = os.path.abspath(__file__)
-        program_arguments = [sys.executable, script_path]
+    try:
+        program_arguments = autostart_arguments()
+    except Exception as e:
+        return False, str(e)
 
     plist_data = {
         "Label": LAUNCH_AGENT_LABEL,
